@@ -153,8 +153,11 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
         gas: 800_000n,
       });
       setTxHash(hash);
-    } catch (err) {
+    } catch (err: any) {
       console.error("CreateProject error:", err);
+      console.error("Short message:", err?.shortMessage);
+      console.error("Revert reason:", err?.cause?.reason || err?.cause?.data?.message || err?.reason);
+      console.error("Full error cause:", JSON.stringify(err?.cause, null, 2));
     }
   }
 

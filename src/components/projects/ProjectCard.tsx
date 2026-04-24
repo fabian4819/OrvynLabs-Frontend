@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FundingProgress } from "./FundingProgress";
@@ -17,6 +18,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, index }: ProjectCardProps) {
+  const router = useRouter();
   const expired = isExpired(project.currentDeadline);
   const hasActiveMilestone = project.currentDeadline > 0n;
   const milestoneLabel = `Milestone ${Number(project.currentMilestoneIndex) + 1} / ${Number(project.milestoneCount)}`;
@@ -30,8 +32,10 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
       transition={{ duration: 0.4, delay: index * 0.05 }}
       whileHover={{ y: -5 }}
     >
-      <Link href={`/projects/${project.address}`}>
-        <Card className="h-full flex flex-col glass-morphism hover:border-blue-500/50 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-xl hover:shadow-blue-500/10 overflow-hidden">
+      <Card
+        className="h-full flex flex-col glass-morphism hover:border-blue-500/50 transition-all duration-300 cursor-pointer group shadow-sm hover:shadow-xl hover:shadow-blue-500/10 overflow-hidden"
+        onClick={() => router.push(`/projects/${project.address}`)}
+      >
           {/* Project Image */}
           <div className="relative w-full h-48 bg-gradient-to-br from-blue-500/10 to-purple-500/10 overflow-hidden">
             <Image
@@ -56,8 +60,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
               </div>
             )}
 
-            {/* Favorite Button */}
-            <div className="absolute top-3 right-3">
+            <div className="absolute top-3 right-3" onClick={(e) => { e.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}>
               <FavoriteButton projectAddress={project.address} size="sm" />
             </div>
           </div>
@@ -91,7 +94,10 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
 
               <Link
                 href={`/profile/${project.researcher}`}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.nativeEvent.stopImmediatePropagation();
+                }}
                 className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/5 hover:border-blue-500/30 transition-colors group/researcher"
               >
                 <User className="h-3.5 w-3.5 text-blue-400 group-hover/researcher:text-blue-300" />
@@ -141,8 +147,7 @@ export function ProjectCard({ project, index }: ProjectCardProps) {
               <span className="text-blue-400 font-bold">Details →</span>
             </div>
           </CardFooter>
-        </Card>
-      </Link>
+      </Card>
     </motion.div>
   );
 }
