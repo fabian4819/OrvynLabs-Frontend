@@ -6,30 +6,35 @@ import { ProjectGrid } from "@/components/projects/ProjectGrid";
 import { NetworkBadge } from "@/components/web3/NetworkBadge";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
 import { useAccount } from "wagmi";
-import { Input } from "@/components/ui/input";
-import { Search, FlaskConical, Filter } from "lucide-react";
+import { SearchInput } from "@/components/ui/search-input";
+import { FlaskConical, Filter } from "lucide-react";
 import { FadeIn, StaggerContainer, StaggerItem, ParallaxBackground } from "@/components/ui/motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProjectStatus } from "@/lib/utils";
+import { getProjectMetadata, type ProjectCategory, CATEGORIES } from "@/lib/projectMetadata";
 
 export default function ProjectsPage() {
   const { projects, isLoading, projectCount, refetch } = useProjects();
   const { isConnected } = useAccount();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<ProjectCategory | "all">("all");
 
   const filteredProjects = useMemo(() => {
     return projects.filter(p => {
-      const matchesSearch = 
-        p.title.toLowerCase().includes(search.toLowerCase()) || 
+      const matchesSearch =
+        p.title.toLowerCase().includes(search.toLowerCase()) ||
         p.address.toLowerCase().includes(search.toLowerCase()) ||
         p.researcher.toLowerCase().includes(search.toLowerCase());
-      
+
       const matchesStatus = statusFilter === "all" || p.status === parseInt(statusFilter);
-      
-      return matchesSearch && matchesStatus;
+
+      const metadata = getProjectMetadata(p.address);
+      const matchesCategory = categoryFilter === "all" || metadata?.category === categoryFilter;
+
+      return matchesSearch && matchesStatus && matchesCategory;
     });
-  }, [projects, search, statusFilter]);
+  }, [projects, search, statusFilter, categoryFilter]);
 
   return (
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden">
@@ -51,13 +56,11 @@ export default function ProjectsPage() {
 
             <div className="flex flex-col lg:flex-row items-center gap-4 w-full md:w-auto">
               <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                <div className="relative w-full sm:w-64 group">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-blue-400 transition-colors" />
-                  <Input
+                <div className="w-full sm:w-64">
+                  <SearchInput
                     placeholder="Search registry..."
-                    className="pl-11 h-12 rounded-2xl glass-morphism border-white/10 focus:border-blue-500/50 transition-all shadow-inner text-sm"
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={setSearch}
                   />
                 </div>
                 
@@ -74,6 +77,25 @@ export default function ProjectsPage() {
                       <SelectItem value={ProjectStatus.Active.toString()}>Active</SelectItem>
                       <SelectItem value={ProjectStatus.Completed.toString()}>Completed</SelectItem>
                       <SelectItem value={ProjectStatus.Cancelled.toString()}>Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full sm:w-48">
+                  <Select value={categoryFilter} onValueChange={(v) => setCategoryFilter(v as ProjectCategory | "all")}>
+                    <SelectTrigger className="h-12 rounded-2xl glass-morphism border-white/10 focus:ring-blue-500/50 text-sm">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="h-3.5 w-3.5 text-purple-400" />
+                        <SelectValue placeholder="Category" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="glass-morphism border-white/10">
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -97,11 +119,12 @@ export default function ProjectsPage() {
                   {isLoading ? "Fetching ledger data..." : `Protocol Live: ${filteredProjects.length} Projects`}
                 </p>
               </div>
-              {!isLoading && (search || statusFilter !== "all") && (
-                <button 
+              {!isLoading && (search || statusFilter !== "all" || categoryFilter !== "all") && (
+                <button
                   onClick={() => {
                     setSearch("");
                     setStatusFilter("all");
+                    setCategoryFilter("all");
                   }}
                   className="text-[10px] uppercase tracking-widest text-blue-400 hover:text-blue-300 font-black transition-colors"
                 >

@@ -1,0 +1,398 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "submit": "Submit",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search...",
+    "filter": "Filter",
+    "export": "Export",
+    "share": "Share",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "viewAll": "View All",
+    "learnMore": "Learn More"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "create": "Create",
+    "stake": "Stake",
+    "analytics": "Analytics",
+    "leaderboard": "Leaderboard",
+    "history": "History",
+    "favorites": "Favorites",
+    "profile": "Profile",
+    "help": "Help"
+  },
+  "home": {
+    "hero": {
+      "title": "Empower Research Through Decentralized Funding",
+      "subtitle": "Support groundbreaking academic research with transparency and accountability on the blockchain.",
+      "browseProjects": "Browse Projects",
+      "createProject": "Create Project",
+      "stats": {
+        "totalRaised": "Total Raised",
+        "activeProjects": "Active Projects",
+        "totalStaked": "Total Staked"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "subtitle": "A transparent, community-driven research funding platform",
+      "browse": {
+        "title": "Browse Research Projects",
+        "description": "Discover innovative research projects across various academic fields"
+      },
+      "donate": {
+        "title": "Support with DKT",
+        "description": "Contribute to projects you believe in using Dikti Tokens"
+      },
+      "vote": {
+        "title": "Vote on Milestones",
+        "description": "Participate in milestone voting to ensure project accountability"
+      },
+      "earn": {
+        "title": "Earn Rewards",
+        "description": "Stake tokens and earn rewards while supporting research"
+      }
+    }
+  },
+  "projects": {
+    "title": "Research Projects",
+    "subtitle": "Discover and support innovative research initiatives",
+    "create": "Create Project",
+    "searchPlaceholder": "Search projects by title, researcher, or description...",
+    "filters": {
+      "all": "All Projects",
+      "active": "Active",
+      "funded": "Funded",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First",
+      "mostFunded": "Most Funded",
+      "leastFunded": "Least Funded",
+      "deadline": "Ending Soon"
+    },
+    "card": {
+      "by": "by",
+      "goal": "Goal",
+      "raised": "Raised",
+      "donors": "Donors",
+      "daysLeft": "days left",
+      "funded": "Funded",
+      "viewProject": "View Project"
+    },
+    "empty": {
+      "title": "No projects found",
+      "description": "Try adjusting your filters or create the first project!"
+    }
+  },
+  "projectDetail": {
+    "backToProjects": "Back to Projects",
+    "donate": "Donate",
+    "share": "Share",
+    "favorite": "Favorite",
+    "tabs": {
+      "overview": "Overview",
+      "milestones": "Milestones",
+      "updates": "Updates",
+      "donors": "Donors"
+    },
+    "overview": {
+      "about": "About This Project",
+      "researcher": "Researcher",
+      "category": "Category",
+      "tags": "Tags",
+      "timeline": "Timeline",
+      "created": "Created",
+      "deadline": "Deadline",
+      "status": "Status"
+    },
+    "milestones": {
+      "title": "Project Milestones",
+      "description": "Track the progress and completion of research milestones",
+      "allocation": "Allocation",
+      "status": {
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "voting": "Voting",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "submitProof": "Submit Proof",
+      "vote": "Vote",
+      "votingEnds": "Voting ends"
+    },
+    "updates": {
+      "title": "Project Updates",
+      "postUpdate": "Post Update",
+      "placeholder": "Share progress, findings, or news...",
+      "maxLength": "Maximum 1000 characters",
+      "empty": "No updates yet. Check back later!"
+    },
+    "donors": {
+      "title": "Project Supporters",
+      "totalDonors": "Total Donors",
+      "totalDonated": "Total Donated",
+      "topDonor": "Top Donor",
+      "amount": "Amount",
+      "anonymous": "Anonymous",
+      "you": "You"
+    }
+  },
+  "createProject": {
+    "title": "Create Research Project",
+    "description": "Launch your research project and connect with supporters worldwide",
+    "form": {
+      "title": "Project Title",
+      "titlePlaceholder": "Enter a clear, descriptive title",
+      "description": "Project Description",
+      "descriptionPlaceholder": "Describe your research goals, methodology, and expected outcomes...",
+      "category": "Category",
+      "categoryPlaceholder": "Select a category",
+      "tags": "Tags",
+      "tagsPlaceholder": "Add tags (comma-separated)",
+      "fundingGoal": "Funding Goal (DKT)",
+      "fundingGoalPlaceholder": "Enter funding amount",
+      "deadline": "Deadline",
+      "milestones": "Milestones",
+      "addMilestone": "Add Milestone",
+      "milestoneName": "Milestone Name",
+      "milestonePercentage": "Percentage of Funds",
+      "removeMilestone": "Remove",
+      "image": "Project Image",
+      "uploadImage": "Upload Image",
+      "changeImage": "Change Image",
+      "totalPercentage": "Total: {percentage}%",
+      "percentageError": "Milestone percentages must equal 100%"
+    },
+    "creating": "Creating project...",
+    "success": "Project created successfully!",
+    "error": "Failed to create project"
+  },
+  "stake": {
+    "title": "Stake & Earn",
+    "subtitle": "Stake DKT tokens to earn rewards while supporting research",
+    "stats": {
+      "yourStake": "Your Stake",
+      "totalStaked": "Total Staked",
+      "apr": "APR",
+      "rewards": "Unclaimed Rewards"
+    },
+    "tabs": {
+      "stake": "Stake",
+      "unstake": "Unstake",
+      "rewards": "Claim Rewards"
+    },
+    "stakeTab": {
+      "title": "Stake DKT Tokens",
+      "description": "Lock your tokens to earn staking rewards",
+      "amountLabel": "Amount to Stake",
+      "amountPlaceholder": "Enter amount",
+      "balance": "Balance",
+      "max": "MAX",
+      "button": "Stake Tokens",
+      "staking": "Staking..."
+    },
+    "unstakeTab": {
+      "title": "Unstake DKT Tokens",
+      "description": "Withdraw your staked tokens",
+      "amountLabel": "Amount to Unstake",
+      "staked": "Staked",
+      "button": "Unstake Tokens",
+      "unstaking": "Unstaking..."
+    },
+    "rewardsTab": {
+      "title": "Claim Staking Rewards",
+      "description": "Claim your accumulated staking rewards",
+      "available": "Available to Claim",
+      "button": "Claim Rewards",
+      "claiming": "Claiming...",
+      "history": "Rewards History"
+    }
+  },
+  "analytics": {
+    "title": "Platform Analytics",
+    "subtitle": "Real-time insights into platform activity and growth",
+    "overview": {
+      "title": "Overview",
+      "totalProjects": "Total Projects",
+      "totalRaised": "Total Raised",
+      "totalStakers": "Total Stakers",
+      "avgFunding": "Avg. Funding"
+    },
+    "charts": {
+      "title": "Interactive Charts",
+      "viewCharts": "View Charts",
+      "stakingGrowth": "Staking Growth",
+      "projectDistribution": "Project Distribution",
+      "projectGrowth": "Project Growth",
+      "timeRange": {
+        "24h": "24H",
+        "7d": "7D",
+        "30d": "30D",
+        "all": "ALL"
+      }
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top contributors and researchers on the platform",
+    "tabs": {
+      "projects": "Top Projects",
+      "researchers": "Top Researchers",
+      "completed": "Completed Projects"
+    },
+    "rank": "Rank",
+    "project": "Project",
+    "researcher": "Researcher",
+    "raised": "Raised",
+    "projectsCount": "Projects",
+    "achievements": {
+      "title": "Achievement Badges",
+      "description": "Earn badges by contributing to the platform",
+      "rarity": {
+        "common": "Common",
+        "rare": "Rare",
+        "epic": "Epic",
+        "legendary": "Legendary"
+      }
+    }
+  },
+  "history": {
+    "title": "Transaction History",
+    "subtitle": "Complete record of your on-chain interactions",
+    "filters": {
+      "all": "All Types",
+      "stake": "Stake",
+      "unstake": "Unstake",
+      "claim": "Claim",
+      "donate": "Donate",
+      "vote": "Vote",
+      "other": "Other"
+    },
+    "search": "Search by hash or method...",
+    "dateRange": "Date Range",
+    "export": "Export Data",
+    "stats": {
+      "total": "Total Transactions",
+      "filtered": "Filtered",
+      "successRate": "Success Rate"
+    },
+    "table": {
+      "date": "Date",
+      "type": "Type",
+      "amount": "Amount",
+      "status": "Status",
+      "hash": "Transaction Hash",
+      "view": "View"
+    },
+    "empty": {
+      "noTransactions": "No transactions yet",
+      "noMatches": "No transactions match your filters"
+    }
+  },
+  "profile": {
+    "title": "User Profile",
+    "copyAddress": "Copy Address",
+    "stats": {
+      "balance": "DKT Balance",
+      "staked": "Staked",
+      "projectsCreated": "Projects Created",
+      "rewards": "Total Rewards"
+    },
+    "achievements": "Achievements",
+    "noAchievements": "No achievements yet",
+    "projects": {
+      "title": "Created Projects",
+      "empty": "No projects created yet"
+    }
+  },
+  "help": {
+    "title": "Help Center",
+    "subtitle": "Everything you need to know about Orvyn-Labs",
+    "quickStart": {
+      "title": "Quick Start Guide",
+      "step1": "Connect your wallet using MetaMask or compatible wallet",
+      "step2": "Explore projects or create your own research proposal",
+      "step3": "Support projects with DKT tokens or stake to earn rewards",
+      "step4": "Participate in milestone voting as a donor"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "categories": {
+        "general": "General",
+        "funding": "Funding",
+        "staking": "Staking",
+        "technical": "Technical"
+      }
+    },
+    "glossary": {
+      "title": "Glossary",
+      "dkt": "DKT (Dikti Token)",
+      "milestone": "Milestone",
+      "staking": "Staking",
+      "apr": "APR (Annual Percentage Rate)",
+      "gas": "Gas Fee",
+      "wallet": "Wallet",
+      "blockchain": "Blockchain",
+      "smartContract": "Smart Contract",
+      "dapp": "DApp"
+    },
+    "resources": {
+      "title": "Resources",
+      "whitepaper": "Whitepaper",
+      "github": "GitHub Repository",
+      "explorer": "Block Explorer",
+      "docs": "Documentation"
+    }
+  },
+  "export": {
+    "title": "Export Transaction Data",
+    "dateRange": {
+      "title": "Date Range (Optional)",
+      "start": "Start Date",
+      "end": "End Date",
+      "clear": "Clear Date Range"
+    },
+    "count": "Transactions to export:",
+    "formats": {
+      "title": "Export Format",
+      "csv": {
+        "title": "CSV Spreadsheet",
+        "description": "Import into Excel, Google Sheets"
+      },
+      "json": {
+        "title": "JSON Data",
+        "description": "Raw data for developers"
+      },
+      "tax": {
+        "title": "Tax Summary",
+        "description": "Formatted summary for tax reporting"
+      }
+    },
+    "disclaimer": "Export data is for personal records. Consult a tax professional for official reporting requirements."
+  },
+  "wallet": {
+    "connect": "Connect to view",
+    "connectPrompt": {
+      "title": "Connect Your Wallet",
+      "description": "Please connect your wallet to access this feature"
+    },
+    "wrongNetwork": "Wrong Network",
+    "switchNetwork": "Switch to DChain"
+  }
+}

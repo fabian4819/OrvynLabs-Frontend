@@ -4,9 +4,11 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
-import { headers } from "next/headers";
+import { ClientLayout } from "@/components/layout/ClientLayout";
+import { headers, cookies } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi";
+import { defaultLocale, type Locale } from "@/i18n/request";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,16 +35,25 @@ export default async function RootLayout({
   const cookie = headersList.get("cookie");
   const initialState = cookieToInitialState(wagmiConfig, cookie);
 
+  // Get locale from cookie
+  const cookieStore = await cookies();
+  const locale = (cookieStore.get("NEXT_LOCALE")?.value || defaultLocale) as Locale;
+
+  // Load messages for the current locale
+  const messages = (await import(`@/locales/${locale}.json`)).default;
+
   return (
-    <html lang="en" className="dark">
+    <html lang={locale} className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
-        <Providers initialState={initialState}>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+        <Providers initialState={initialState} locale={locale} messages={messages}>
+          <ClientLayout>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </ClientLayout>
         </Providers>
       </body>
     </html>

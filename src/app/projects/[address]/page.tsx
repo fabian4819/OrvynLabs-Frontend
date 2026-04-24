@@ -9,6 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { TxButton } from "@/components/web3/TxButton";
 import { NetworkBadge } from "@/components/web3/NetworkBadge";
 import { DonateForm } from "@/components/projects/DonateForm";
+import { ShareButtons } from "@/components/projects/ShareButtons";
+import { ProjectUpdates } from "@/components/projects/ProjectUpdates";
 import {
   shortenAddress,
   formatDeadline,
@@ -733,9 +735,12 @@ export default function ProjectDetailPage({ params }: Props) {
             <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-[1.1] max-w-4xl bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
               {title ?? "Loading Research Project..."}
             </h1>
-            <p className="font-mono text-[10px] text-white/40 bg-white/5 inline-block px-4 py-2 rounded-xl border border-white/5 uppercase tracking-widest font-black">
-              {addr.slice(0, 10)}...{addr.slice(-8)}
-            </p>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <p className="font-mono text-[10px] text-white/40 bg-white/5 inline-block px-4 py-2 rounded-xl border border-white/5 uppercase tracking-widest font-black">
+                {addr.slice(0, 10)}...{addr.slice(-8)}
+              </p>
+              <ShareButtons title={title ?? "Research Project"} compact />
+            </div>
           </div>
         </FadeIn>
 
@@ -800,6 +805,14 @@ export default function ProjectDetailPage({ params }: Props) {
                 />
               </FadeIn>
             )}
+
+            {/* Project Updates */}
+            <FadeIn delay={0.25}>
+              <ProjectUpdates
+                projectAddress={addr}
+                researcherAddress={researcher ?? "0x0"}
+              />
+            </FadeIn>
           </div>
 
           {/* Right column — Donate + activity + metadata */}

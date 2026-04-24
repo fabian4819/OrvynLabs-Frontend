@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt, useChainId } from "wagmi";
-import { parseEther } from "viem";
+import { useWriteContract, useWaitForTransactionReceipt, useChainId, usePublicClient } from "wagmi";
+import { parseEther, decodeEventLog } from "viem";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,13 @@ import { TxButton } from "@/components/web3/TxButton";
 import { getContracts } from "@/lib/contracts";
 import { ProjectFactoryAbi } from "@/lib/abis";
 import { PlusCircle, Trash2, Plus } from "lucide-react";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { saveProjectImage } from "@/lib/projectImages";
+import { useEffect } from "react";
+import { TagInput } from "@/components/ui/tag-input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CATEGORIES, type ProjectCategory, saveProjectMetadata } from "@/lib/projectMetadata";
+import { HelpTooltip } from "@/components/ui/help-tooltip";
 
 interface MilestoneRow {
   title: string;
@@ -38,11 +45,16 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
 
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [category, setCategory] = useState<ProjectCategory | "">("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [imageHash, setImageHash] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [milestones, setMilestones] = useState<MilestoneRow[]>([{ ...DEFAULT_MILESTONE }]);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
+  const publicClient = usePublicClient();
   const { writeContractAsync, isPending, error: writeError } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+  const { data: receipt, isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
 
   const txState =
     isPending ? "pending" :
@@ -52,6 +64,49 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
     "idle";
 
   const isBusy = txState === "pending" || txState === "confirming";
+
+  // Save project metadata when transaction succeeds
+  useEffect(() => {
+    if (isSuccess && receipt && publicClient) {
+      // Parse logs to find ProjectCreated event
+      try {
+        for (const log of receipt.logs) {
+          try {
+            const decoded = decodeEventLog({
+              abi: ProjectFactoryAbi,
+              data: log.data,
+              topics: log.topics,
+            });
+
+            if (decoded.eventName === "ProjectCreated") {
+              const projectAddress = (decoded.args as any).projectAddress;
+              if (projectAddress) {
+                // Save image if exists
+                if (imageHash) {
+                  saveProjectImage(projectAddress, imageHash, imageUrl);
+                }
+
+                // Save metadata if exists
+                if (category || tags.length > 0) {
+                  saveProjectMetadata(projectAddress, {
+                    category: category || undefined,
+                    tags,
+                  });
+                }
+
+                console.log("Saved project metadata for", projectAddress);
+              }
+              break;
+            }
+          } catch {
+            // Not our event, continue
+          }
+        }
+      } catch (err) {
+        console.error("Error saving project metadata:", err);
+      }
+    }
+  }, [isSuccess, receipt, imageHash, imageUrl, category, tags, publicClient]);
 
   // Validate: project title + all milestone rows must be filled
   const isFormValid =
@@ -105,6 +160,10 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
 
   function resetForm() {
     setTitle("");
+    setCategory("");
+    setTags([]);
+    setImageHash("");
+    setImageUrl("");
     setMilestones([{ ...DEFAULT_MILESTONE }]);
     setTxHash(undefined);
   }
@@ -155,7 +214,10 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
             <div className="space-y-5 py-2">
               {/* Project title */}
               <div className="space-y-1.5">
-                <Label htmlFor="project-title">Project Title</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="project-title">Project Title</Label>
+                  <HelpTooltip content="A clear, descriptive title for your research project. This will be displayed publicly and help supporters understand your work." />
+                </div>
                 <Input
                   id="project-title"
                   placeholder="e.g. AI-driven drug discovery for tuberculosis"
@@ -166,10 +228,65 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
                 />
               </div>
 
+              {/* Project Image */}
+              <div className="space-y-1.5">
+                <Label>Project Image (Optional)</Label>
+                <ImageUpload
+                  onUpload={(hash, url) => {
+                    setImageHash(hash);
+                    setImageUrl(url);
+                  }}
+                  onRemove={() => {
+                    setImageHash("");
+                    setImageUrl("");
+                  }}
+                  currentImage={imageUrl}
+                  disabled={isBusy}
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="category">Category (Optional)</Label>
+                  <HelpTooltip content="Categorize your project to help supporters discover it through filtered searches. Choose the category that best represents your research field." />
+                </div>
+                <Select value={category} onValueChange={(v) => setCategory(v as ProjectCategory)} disabled={isBusy}>
+                  <SelectTrigger id="category" className="h-12 rounded-xl">
+                    <SelectValue placeholder="Select a category..." />
+                  </SelectTrigger>
+                  <SelectContent className="glass-morphism border-white/10">
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Label>Tags (Optional)</Label>
+                  <HelpTooltip content="Add up to 5 tags to help supporters find your project. Use relevant keywords like 'machine-learning', 'clinical-trial', or specific disease names." />
+                </div>
+                <TagInput
+                  tags={tags}
+                  onChange={setTags}
+                  maxTags={5}
+                  placeholder="e.g., machine-learning, covid-19, clinical-trial"
+                  disabled={isBusy}
+                />
+              </div>
+
               {/* Milestone rows */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Milestones</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label>Milestones</Label>
+                    <HelpTooltip content="Break your project into stages with individual funding goals and deadlines. Each milestone must be completed before funds are released. Deadlines run sequentially from project start." />
+                  </div>
                   <span className="text-xs text-muted-foreground">
                     Deadlines are cumulative (sequential)
                   </span>

@@ -8,13 +8,23 @@ import { useChainId } from "wagmi";
 import { cn, formatDkt } from "@/lib/utils";
 import { DiktiTokenAbi } from "@/lib/abis";
 import { getContracts } from "@/lib/contracts";
+import { ThemeToggle } from "./ThemeToggle";
+import { NotificationBell } from "./NotificationBell";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 
 const NAV_LINKS = [
-  { href: "/projects", label: "Projects" },
-  { href: "/stake", label: "Stake DKT" },
-  { href: "/analytics", label: "Analytics" },
-];
+  { href: "/projects", key: "projects" },
+  { href: "/stake", key: "stake" },
+  { href: "/analytics", key: "analytics" },
+  { href: "/leaderboard", key: "leaderboard" },
+  { href: "/history", key: "history" },
+  { href: "/favorites", key: "favorites" },
+  { href: "/help", key: "help" },
+] as const;
 
 function DktBalance() {
   const { address, isConnected } = useAccount();
@@ -41,6 +51,9 @@ function DktBalance() {
 
 export function Navbar() {
   const pathname = usePathname();
+  const { address, isConnected } = useAccount();
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
@@ -53,26 +66,53 @@ export function Navbar() {
 
           {/* Nav links */}
           <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/5">
-            {NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200",
-                  pathname.startsWith(href)
-                    ? "text-white bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
-                    : "text-muted-foreground hover:text-white hover:bg-white/5"
-                )}
-              >
-                {label}
-              </Link>
-            ))}
+            {NAV_LINKS.map(({ href, key }) => {
+              // Add data-tour attributes for onboarding
+              const getTourAttr = () => {
+                if (href === "/projects") return "projects";
+                if (href === "/stake") return "stake";
+                if (href === "/analytics") return "analytics";
+                return undefined;
+              };
+
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  data-tour={getTourAttr()}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200",
+                    pathname.startsWith(href)
+                      ? "text-white bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                      : "text-muted-foreground hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  {t(key)}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Right section */}
           <div className="flex items-center gap-3">
             <DktBalance />
-            <div className="scale-90 sm:scale-100 origin-right">
+            <NotificationBell />
+            {isConnected && address && (
+              <Link href={`/profile/${address}`}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 hidden sm:flex"
+                  title={t("profile")}
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-xs">{t("profile")}</span>
+                </Button>
+              </Link>
+            )}
+            <LanguageSwitcher />
+            <ThemeToggle />
+            <div className="scale-90 sm:scale-100 origin-right" data-tour="connect-wallet">
               <ConnectButton
                 accountStatus="avatar"
                 chainStatus="icon"

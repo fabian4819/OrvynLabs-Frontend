@@ -122,18 +122,38 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: 
-      radial-gradient(at 0% 0%, hsla(217,100%,56%,0.05) 0, transparent 50%), 
+    background-attachment: fixed;
+  }
+
+  /* Dark mode background */
+  .dark body {
+    background-image:
+      radial-gradient(at 0% 0%, hsla(217,100%,56%,0.05) 0, transparent 50%),
       radial-gradient(at 50% 0%, hsla(222,47%,11%,0.15) 0, transparent 50%),
       radial-gradient(at 100% 0%, hsla(217,100%,56%,0.05) 0, transparent 50%);
-    background-attachment: fixed;
+  }
+
+  /* Light mode background */
+  :root body {
+    background-image:
+      radial-gradient(at 0% 0%, hsla(217,100%,76%,0.08) 0, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(222,47%,91%,0.12) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(217,100%,76%,0.08) 0, transparent 50%);
   }
 }
 
 .bg-grid-pattern {
   background-size: 40px 40px;
+}
+
+.dark .bg-grid-pattern {
   background-image: linear-gradient(to right, oklch(1 0 0 / 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, oklch(1 0 0 / 0.05) 1px, transparent 1px);
+}
+
+:root .bg-grid-pattern {
+  background-image: linear-gradient(to right, oklch(0 0 0 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, oklch(0 0 0 / 0.05) 1px, transparent 1px);
 }
 
 .glass-morphism {

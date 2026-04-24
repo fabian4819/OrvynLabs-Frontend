@@ -3,14 +3,16 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { NetworkBadge } from "@/components/web3/NetworkBadge";
 import { PoolStats } from "@/components/analytics/PoolStats";
 import { GasBarChart } from "@/components/analytics/GasBarChart";
 import { TxComplexityTable } from "@/components/analytics/TxComplexityTable";
 import { GAS_SNAPSHOT, LAYER_COLORS } from "@/hooks/useAnalytics";
 import { formatGas } from "@/lib/utils";
-import { Info, Download } from "lucide-react";
+import { Info, Download, TrendingUp } from "lucide-react";
 import { FadeIn, StaggerContainer, StaggerItem, ParallaxBackground } from "@/components/ui/motion";
+import Link from "next/link";
 
 // O(1) scaling evidence data — gas cost stays flat as staker count grows
 const SCALING_EVIDENCE = [
@@ -61,12 +63,20 @@ export default function AnalyticsPage() {
                 L1 (Direct Donate/Refund) → L2 (Staking) → L3 (Yield Distribution) → L4 (Voting / Factory Deployment).
               </p>
             </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2.5 text-xs font-black uppercase tracking-widest border border-white/10 bg-white/5 rounded-2xl px-6 py-3.5 hover:bg-white/10 hover:border-white/20 transition-all shadow-xl group"
-            >
-              <Download className="h-4 w-4 text-blue-400 group-hover:scale-110 transition-transform" /> Export JSON Registry
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/analytics/charts">
+                <Button variant="outline" className="gap-2 h-auto px-6 py-3.5 rounded-2xl">
+                  <TrendingUp className="h-4 w-4 text-purple-400" />
+                  <span className="text-xs font-black uppercase tracking-widest">Interactive Charts</span>
+                </Button>
+              </Link>
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2.5 text-xs font-black uppercase tracking-widest border border-white/10 bg-white/5 rounded-2xl px-6 py-3.5 hover:bg-white/10 hover:border-white/20 transition-all shadow-xl group"
+              >
+                <Download className="h-4 w-4 text-blue-400 group-hover:scale-110 transition-transform" /> Export JSON Registry
+              </button>
+            </div>
           </div>
         </FadeIn>
 
