@@ -11,7 +11,7 @@ import { getContracts } from "@/lib/contracts";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { User } from "lucide-react";
+import { User, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
@@ -98,17 +98,30 @@ export function Navbar() {
             <DktBalance />
             <NotificationBell />
             {isConnected && address && (
-              <Link href={`/profile/${address}`}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 hidden sm:flex"
-                  title={t("profile")}
-                >
-                  <User className="h-4 w-4" />
-                  <span className="text-xs">{t("profile")}</span>
-                </Button>
-              </Link>
+              <>
+                <Link href="/faucet">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 hidden sm:flex"
+                    title="Faucet"
+                  >
+                    <Droplets className="h-4 w-4" />
+                    <span className="text-xs">Faucet</span>
+                  </Button>
+                </Link>
+                <Link href={`/profile/${address}`}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2 hidden sm:flex"
+                    title={t("profile")}
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="text-xs">{t("profile")}</span>
+                  </Button>
+                </Link>
+              </>
             )}
             <LanguageSwitcher />
             <ThemeToggle />
