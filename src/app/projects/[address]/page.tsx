@@ -403,8 +403,8 @@ function ActionPanel({
   const hasRaised      = milestone.raised > 0n;
   const isDonor        = (myDonation ?? 0n) > 0n;
 
-  // Researcher: can submit proof when status=Pending and has raised (anytime before or at deadline)
-  const canSubmitProof = isResearcher && milestone.status === MilestoneStatus.Pending && hasRaised;
+  // Researcher: can submit proof when status=Pending and (goal reached OR deadline passed) and has raised
+  const canSubmitProof = isResearcher && milestone.status === MilestoneStatus.Pending && (hasRaised || deadlinePassed) && hasRaised;
   // Researcher: can skip when deadline passed, status=Pending, no donations
   const canSkip = deadlinePassed && milestone.status === MilestoneStatus.Pending && !hasRaised;
   // Anyone: can force-finalize a voting milestone
