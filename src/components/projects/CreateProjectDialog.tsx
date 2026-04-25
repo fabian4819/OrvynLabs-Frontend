@@ -195,7 +195,7 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
         <DialogHeader>
           <DialogTitle>Create Research Project</DialogTitle>
           <DialogDescription>
-            Deploy a new milestone-based crowdfunding project on Base Sepolia.
+            Deploy a new milestone-based crowdfunding project on DChain.
             Each milestone has its own goal, duration, and donor vote for fund release.
           </DialogDescription>
         </DialogHeader>

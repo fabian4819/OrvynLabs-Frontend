@@ -22,7 +22,7 @@ export function Footer() {
             <p className="opacity-80">
               Bachelor Thesis — Performance Analysis
             </p>
-            <p className="opacity-80">Base Sepolia L2 Network Benchmarking</p>
+            <p className="opacity-80">DChain L2 Network Benchmarking</p>
           </div>
 
           <div className="flex flex-col items-center md:items-end gap-2">

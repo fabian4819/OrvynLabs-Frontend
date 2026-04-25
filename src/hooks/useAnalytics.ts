@@ -6,7 +6,7 @@ import { getContracts } from "@/lib/contracts";
 import { FundingPoolAbi, StakingVaultAbi, YieldDistributorAbi, ProjectFactoryAbi } from "@/lib/abis";
 
 // Static gas snapshot data from `forge test --gas-report` (median gas per function).
-// Values are in gas units (L2 execution gas on Base Sepolia).
+// Values are in gas units (L2 execution gas on DChain).
 // Last updated: from GasBenchmark.t.sol run (all 115 tests pass).
 export const GAS_SNAPSHOT = [
   // Layer 1 — ResearchProject direct operations

@@ -911,7 +911,7 @@ export default function ProjectDetailPage({ params }: Props) {
               <div className="p-7 rounded-[2rem] glass-morphism border border-white/5 text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Network</span>
-                  <span className="text-white/60">Base Sepolia</span>
+                  <span className="text-white/60">DChain</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Upgrade Standard</span>
