@@ -66,7 +66,7 @@ export function HeroSection() {
           <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto border-t border-white/5 mt-16">
             {[
               { label: "Gas Efficiency", val: "O(1) Rewards" },
-              { label: "Network", val: "Base L2" },
+              { label: "Network", val: "DChain" },
               { label: "Architecture", val: "UUPS Proxy" },
               { label: "Benchmark", val: "L1 vs L2" },
             ].map((stat) => (

@@ -56,16 +56,18 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo and Brand Name */}
-          <Link href="/" className="shrink-0 flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="Orvyn-Labs Logo"
-              width={40}
-              height={40}
-              className="h-10 w-10"
-              priority
-            />
-            <span className="hidden sm:inline font-bold text-base text-white leading-none">Orvyn-Labs</span>
+          <Link href="/" className="shrink-0 flex items-center gap-3">
+            <div className="flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="Orvyn-Labs Logo"
+                width={36}
+                height={36}
+                className="h-9 w-9"
+                priority
+              />
+            </div>
+            <span className="hidden sm:inline font-bold text-sm text-white leading-tight">Orvyn-Labs</span>
           </Link>
 
           {/* Nav links */}
