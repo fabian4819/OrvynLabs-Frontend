@@ -8,6 +8,7 @@ export const CONTRACT_ADDRESSES = {
     yieldDistributor:  (process.env.NEXT_PUBLIC_YIELD_DISTRIBUTOR  ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
     fundingPool:       (process.env.NEXT_PUBLIC_FUNDING_POOL       ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
     projectFactory:    (process.env.NEXT_PUBLIC_PROJECT_FACTORY    ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
+    dktFaucet:         (process.env.NEXT_PUBLIC_DKT_FAUCET         ?? "0x0000000000000000000000000000000000000000") as `0x${string}`,
   },
 } as const;
 

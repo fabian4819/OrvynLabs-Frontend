@@ -113,12 +113,17 @@ function inferTransactionType(data: string): TransactionType {
 
   // Common method selectors (first 4 bytes of keccak256)
   const METHOD_MAP: Record<string, TransactionType> = {
-    "0xa694fc3a": "stake", // stake(uint256)
-    "0x2e1a7d4d": "unstake", // withdraw(uint256)
-    "0x4e71d92d": "claim", // claim() / claimYield()
-    "0xed88c68e": "donate", // donate(address,uint256)
-    "0x0121b93f": "vote", // vote(uint256,bool)
-    "0xb61d27f6": "other", // execute(address,uint256,bytes)
+    "0xdc8c4ffe": "stake",     // stake(uint256,address,uint16)
+    "0x2e17de78": "unstake",   // unstake(uint256)
+    "0x406cf229": "claim",     // claimYield()
+    "0xf14faf6f": "donate",    // donate(uint256)
+    "0x4b9f5c98": "vote",      // vote(bool)
+    "0x2c2e8faf": "other",     // submitProof(string)
+    "0xd1147561": "other",     // createProject(string,string[],uint256[],uint256[])
+    "0x40abda13": "other",     // finalizeMilestone()
+    "0x5b7baf64": "other",     // claimRefund(uint256)
+    "0xece4615b": "other",     // skipMilestone()
+    "0xea8a1af0": "other",     // cancel()
   };
 
   return METHOD_MAP[selector] || "other";
@@ -131,11 +136,17 @@ function getMethodName(data: string): string | undefined {
   const selector = data.slice(0, 10);
 
   const NAME_MAP: Record<string, string> = {
-    "0xa694fc3a": "stake",
-    "0x2e1a7d4d": "unstake",
-    "0x4e71d92d": "claimYield",
-    "0xed88c68e": "donate",
-    "0x0121b93f": "vote",
+    "0xdc8c4ffe": "stake",
+    "0x2e17de78": "unstake",
+    "0x406cf229": "claimYield",
+    "0xf14faf6f": "donate",
+    "0x4b9f5c98": "vote",
+    "0x2c2e8faf": "submitProof",
+    "0xd1147561": "createProject",
+    "0x40abda13": "finalizeMilestone",
+    "0x5b7baf64": "claimRefund",
+    "0xece4615b": "skipMilestone",
+    "0xea8a1af0": "cancel",
     "0xa9059cbb": "transfer",
     "0x095ea7b3": "approve",
   };

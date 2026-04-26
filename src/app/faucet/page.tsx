@@ -2,96 +2,115 @@
 
 import { useState, useEffect } from "react";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseEther, zeroAddress } from "viem";
+import { formatEther, zeroAddress } from "viem";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { ConnectPrompt } from "@/components/web3/ConnectPrompt";
 import { NetworkBadge } from "@/components/web3/NetworkBadge";
-import { DiktiTokenAbi } from "@/lib/abis";
+import { TxButton } from "@/components/web3/TxButton";
 import { getContracts } from "@/lib/contracts";
-import { cn, formatDkt, shortenAddress } from "@/lib/utils";
+import { DiktiTokenAbi } from "@/lib/abis";
+import { cn, formatDkt } from "@/lib/utils";
 import { FadeIn, ParallaxBackground } from "@/components/ui/motion";
-import { useChainId } from "wagmi";
-import { Droplets, ShieldCheck, ShieldX, Copy, Check, AlertTriangle } from "lucide-react";
+import { Droplets, Clock, Check, Copy, AlertCircle } from "lucide-react";
 
-const MINTER_ROLE_HASH = "0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6";
+const FAUCET_ABI = [
+  { type: "function", name: "claimAmount", inputs: [], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "cooldown", inputs: [], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "canClaim", inputs: [{ name: "user", type: "address" }], outputs: [{ name: "", type: "bool" }], stateMutability: "view" },
+  { type: "function", name: "nextClaimTime", inputs: [{ name: "user", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "lastClaim", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "uint256" }], stateMutability: "view" },
+  { type: "function", name: "claim", inputs: [], outputs: [], stateMutability: "nonpayable" },
+  { type: "event", name: "Claimed", inputs: [{ name: "user", type: "address", indexed: true }, { name: "amount", type: "uint256", indexed: false }] },
+] as const;
 
 export default function FaucetPage() {
   const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const contracts = getContracts(chainId);
-  const [recipient, setRecipient] = useState("");
-  const [amount, setAmount] = useState("");
+  const contracts = getContracts(17845);
+  const faucetAddress = process.env.NEXT_PUBLIC_DKT_FAUCET as `0x${string}`;
   const [copied, setCopied] = useState(false);
 
-  const { data: isMinter } = useReadContract({
-    address: contracts.diktiToken,
-    abi: DiktiTokenAbi,
-    functionName: "hasRole",
-    args: [MINTER_ROLE_HASH, address!],
-    query: { enabled: isConnected && !!address },
+  const { data: claimAmount, refetch: refetchAmount } = useReadContract({
+    address: faucetAddress,
+    abi: FAUCET_ABI,
+    functionName: "claimAmount",
   });
 
-  const { data: totalSupply } = useReadContract({
-    address: contracts.diktiToken,
-    abi: DiktiTokenAbi,
-    functionName: "totalSupply",
-    query: { enabled: true },
+  const { data: cooldown, refetch: refetchCooldown } = useReadContract({
+    address: faucetAddress,
+    abi: FAUCET_ABI,
+    functionName: "cooldown",
   });
 
-  const { data: remainingSupply } = useReadContract({
-    address: contracts.diktiToken,
-    abi: DiktiTokenAbi,
-    functionName: "remainingSupply",
-    query: { enabled: true },
+  const { data: canClaimData, refetch: refetchCanClaim } = useReadContract({
+    address: faucetAddress,
+    abi: FAUCET_ABI,
+    functionName: "canClaim",
+    args: [address!],
+    query: { enabled: !!address },
   });
 
-  const { data: balance } = useReadContract({
+  const { data: nextClaimTime } = useReadContract({
+    address: faucetAddress,
+    abi: FAUCET_ABI,
+    functionName: "nextClaimTime",
+    args: [address!],
+    query: { enabled: !!address },
+  });
+
+  const { data: dktBalance, refetch: refetchBalance } = useReadContract({
     address: contracts.diktiToken,
     abi: DiktiTokenAbi,
     functionName: "balanceOf",
-    args: [recipient! as `0x${string}`],
-    query: { enabled: recipient.startsWith("0x") && recipient.length === 42 },
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
   });
 
-  const { data: mintHash, writeContract: mint, isPending: isMintPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: mintHash });
+  const { data: claimHash, writeContract: doClaim, isPending: isClaimPending } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
 
-  const minting = isMintPending || isConfirming;
+  const claiming = isClaimPending || isConfirming;
 
-  function handleMint() {
-    if (!recipient || !amount) return;
-    const parsedAmount = parseEther(amount);
-    mint({
-      address: contracts.diktiToken,
-      abi: DiktiTokenAbi,
-      functionName: "mint",
-      args: [recipient as `0x${string}`, parsedAmount],
+  function handleClaim() {
+    doClaim({
+      address: faucetAddress,
+      abi: FAUCET_ABI,
+      functionName: "claim",
     });
   }
 
-  function handleFillOwnAddress() {
-    if (address) setRecipient(address);
+  function formatCooldown(seconds: bigint) {
+    const s = Number(seconds);
+    if (s < 60) return `${s}s`;
+    if (s < 3600) return `${Math.floor(s / 60)}m`;
+    if (s < 86400) return `${Math.floor(s / 3600)}h`;
+    return `${Math.floor(s / 86400)}d`;
+  }
+
+  function formatNextClaim(timestamp: bigint) {
+    if (timestamp === 0n) return "Now";
+    const diff = Number(timestamp) - Math.floor(Date.now() / 1000);
+    if (diff <= 0) return "Now";
+    if (diff < 60) return `${diff}s`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ${diff % 60}s`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`;
+    return `${Math.floor(diff / 86400)}d`;
   }
 
   useEffect(() => {
     if (isSuccess) {
-      setAmount("");
+      refetchCanClaim();
+      refetchAmount();
+      refetchBalance();
     }
-  }, [isSuccess]);
+  }, [isSuccess, refetchCanClaim, refetchAmount, refetchBalance]);
 
   if (!isConnected) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative">
         <ParallaxBackground />
         <FadeIn>
-          <ConnectPrompt
-            title="Connect to use the Faucet"
-            description="Connect a wallet with MINTER_ROLE to mint Dikti Tokens."
-          />
+          <ConnectPrompt title="Connect to claim DKT" description="Connect your wallet to claim free Dikti Tokens from the faucet." />
         </FadeIn>
       </div>
     );
@@ -108,7 +127,7 @@ export default function FaucetPage() {
                 DKT Faucet
               </h1>
               <p className="text-muted-foreground text-sm font-medium">
-                Mint Dikti Tokens (admin only)
+                Claim free Dikti Tokens for testing
               </p>
             </div>
             <NetworkBadge className="self-start sm:self-auto" />
@@ -116,110 +135,44 @@ export default function FaucetPage() {
         </FadeIn>
 
         <FadeIn delay={0.1}>
-          <div className={cn(
-            "flex items-center gap-3 rounded-2xl border p-4 text-sm font-medium",
-            isMinter
-              ? "border-green-500/20 bg-green-500/5 text-green-400"
-              : "border-red-500/20 bg-red-500/5 text-red-400"
-          )}>
-            {isMinter ? (
-              <>
-                <ShieldCheck className="h-5 w-5 shrink-0" />
-                <span>Your wallet has <span className="font-black">MINTER_ROLE</span>. You can mint DKT tokens.</span>
-              </>
-            ) : (
-              <>
-                <ShieldX className="h-5 w-5 shrink-0" />
-                <span>Your wallet does <span className="font-black">NOT</span> have MINTER_ROLE. You cannot mint tokens.</span>
-              </>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <Card className="glass-morphism border-white/5">
+              <CardContent className="pt-6 space-y-1">
+                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Your Balance</span>
+                <p className="font-black text-xl text-blue-400">{dktBalance !== undefined ? formatDkt(dktBalance) : "—"}</p>
+              </CardContent>
+            </Card>
+            <Card className="glass-morphism border-white/5">
+              <CardContent className="pt-6 space-y-1">
+                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Claim Amount</span>
+                <p className="font-black text-xl">{claimAmount !== undefined ? formatDkt(claimAmount) : "—"}</p>
+              </CardContent>
+            </Card>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.15}>
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="glass-morphism border-white/5">
-              <CardContent className="pt-6 space-y-1">
-                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Total Supply</span>
-                <p className="font-black text-xl">{totalSupply !== undefined ? formatDkt(totalSupply) : "—"}</p>
-              </CardContent>
-            </Card>
-            <Card className="glass-morphism border-white/5">
-              <CardContent className="pt-6 space-y-1">
-                <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">Remaining Supply</span>
-                <p className="font-black text-xl text-blue-400">{remainingSupply !== undefined ? formatDkt(remainingSupply) : "—"}</p>
-              </CardContent>
-            </Card>
-          </div>
-        </FadeIn>
-
-        <FadeIn delay={0.2}>
-          <Card className="glass-morphism border-white/5">
-            <CardHeader>
+          <Card className="glass-morphism border-white/5 rounded-[2.5rem] overflow-hidden">
+            <CardHeader className="bg-blue-500/10 border-b border-blue-500/10 py-6 px-8">
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Droplets className="h-4 w-4 text-blue-400" />
-                Mint DKT Tokens
+                Claim DKT
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Recipient Address
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="0x..."
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value)}
-                    className="font-mono text-sm"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleFillOwnAddress}
-                    className="shrink-0 text-xs"
-                  >
-                    Own
-                  </Button>
-                </div>
-                {balance !== undefined && recipient.startsWith("0x") && recipient.length === 42 && (
-                  <p className="text-xs text-muted-foreground">
-                    Balance: <span className="font-bold text-foreground">{formatDkt(balance)} DKT</span>
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Amount (DKT)
-                </Label>
-                <Input
-                  type="number"
-                  placeholder="1000"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0"
-                />
-                <div className="flex gap-2">
-                  {[100, 1000, 10000].map((preset) => (
-                    <button
-                      key={preset}
-                      onClick={() => setAmount(String(preset))}
-                      className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-blue-500/10 hover:border-blue-500/20 text-muted-foreground hover:text-blue-400 transition-all"
-                    >
-                      {preset.toLocaleString()}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <CardContent className="p-8 space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Claim <span className="text-blue-400 font-black">{claimAmount !== undefined ? formatDkt(claimAmount) : "..."}</span> DKT
+                {cooldown && <span className="text-muted-foreground"> every <span className="font-semibold">{formatCooldown(cooldown)}</span></span>}.
+                No MINTER_ROLE needed — anyone can claim.
+              </p>
 
               {isSuccess && (
                 <div className="flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-400">
                   <Check className="h-4 w-4 shrink-0" />
-                  <span>DKT minted successfully! TX: {shortenAddress(mintHash!, 8)}</span>
+                  <span>DKT claimed! TX: {claimHash!.slice(0, 10)}...{claimHash!.slice(-8)}</span>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(mintHash!);
+                      navigator.clipboard.writeText(claimHash!);
                       setCopied(true);
                       setTimeout(() => setCopied(false), 2000);
                     }}
@@ -230,40 +183,37 @@ export default function FaucetPage() {
                 </div>
               )}
 
-              <Button
-                onClick={handleMint}
-                disabled={!isMinter || !recipient.startsWith("0x") || recipient.length !== 42 || !amount || parseFloat(amount) <= 0 || minting}
-                className="w-full h-11 glow-blue rounded-xl font-bold tracking-tight"
-              >
-                {minting ? "Minting..." : "Mint DKT"}
-              </Button>
+              <TxButton
+                txState={claiming ? "pending" : isSuccess ? "success" : "idle"}
+                idleLabel="Claim DKT"
+                disabled={!canClaimData && canClaimData !== undefined}
+                onClick={handleClaim}
+                className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-lg glow-blue"
+              />
 
-              {!isMinter && (
-                <div className="flex items-start gap-2 text-xs text-yellow-400/80">
-                  <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    Only accounts with <code className="bg-white/5 px-1 py-0.5 rounded text-yellow-300 font-mono">MINTER_ROLE</code> can mint. 
-                    Use the Hardhat script: <code className="bg-white/5 px-1 py-0.5 rounded font-mono">npx hardhat run scripts/mint-dkt.js --network dchain &lt;addr&gt; &lt;amount&gt;</code>
-                  </span>
+              {canClaimData === false && nextClaimTime && nextClaimTime > 0n && (
+                <div className="flex items-center gap-2 text-xs text-amber-400/80">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>Next claim available in <span className="font-bold">{formatNextClaim(nextClaimTime)}</span></span>
                 </div>
               )}
             </CardContent>
           </Card>
         </FadeIn>
 
-        <FadeIn delay={0.3}>
+        <FadeIn delay={0.2}>
           <div className="rounded-3xl border border-white/5 bg-white/[0.02] p-6 text-sm text-muted-foreground space-y-3 relative overflow-hidden group backdrop-blur-sm">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-[60px] translate-x-1/2 -translate-y-1/2 group-hover:bg-purple-500/20 transition-all" />
             <p className="font-bold text-foreground flex items-center gap-2">
               <Droplets className="h-4 w-4 text-blue-400" />
-              About DKT
+              About the Faucet
             </p>
             <ul className="space-y-1.5 text-xs leading-relaxed list-none">
               <li><span className="text-muted-foreground">Token:</span> <span className="font-semibold text-foreground">DiktiToken (DKT)</span> — ERC-20 with 18 decimals</li>
-              <li><span className="text-muted-foreground">Max Supply:</span> <span className="font-semibold text-foreground">1,000,000,000 DKT (1 billion)</span></li>
-              <li><span className="text-muted-foreground">Minting:</span> <span className="font-semibold text-foreground">Restricted to MINTER_ROLE holders</span></li>
-              <li><span className="text-muted-foreground">Use:</span> <span className="font-semibold text-foreground">Staking, project donations, yield rewards</span></li>
-              <li><span className="text-muted-foreground">Contract:</span> <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-blue-400">{contracts.diktiToken}</code></li>
+              <li><span className="text-muted-foreground">Claim:</span> <span className="font-semibold text-foreground">{claimAmount ? formatDkt(claimAmount) : "10,000"} DKT per claim</span></li>
+              <li><span className="text-muted-foreground">Cooldown:</span> <span className="font-semibold text-foreground">{cooldown ? formatCooldown(cooldown) : "1 hour"}</span></li>
+              <li><span className="text-muted-foreground">Access:</span> <span className="font-semibold text-foreground">Public — any connected wallet</span></li>
+              <li><span className="text-muted-foreground">Faucet Contract:</span> <code className="bg-white/5 px-1.5 py-0.5 rounded font-mono text-blue-400">{faucetAddress}</code></li>
             </ul>
           </div>
         </FadeIn>

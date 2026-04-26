@@ -1,0 +1,154 @@
+/**
+ * TEMPLATE: Wallet & Blockchain Interaction Tests
+ *
+ * This file is a template for future Web3 tests.
+ * To use it:
+ * 1. Install Synpress: pnpm add -D @synthetixio/synpress
+ * 2. Configure MetaMask extension in playwright.config.ts
+ * 3. Rename this file to remove .template extension
+ *
+ * See: https://github.com/Synthetixio/synpress
+ */
+
+import { test, expect } from '@playwright/test';
+import { ROUTES, TEST_WALLET, TEST_PROJECT } from '../fixtures/test-data';
+
+// Uncomment when Synpress is installed
+// import { testWithSynpress } from '@synthetixio/synpress';
+// import { MetaMask, metaMaskFixtures } from '@synthetixio/synpress';
+
+test.describe.skip('Wallet Connection Flow', () => {
+  test('Connect wallet via RainbowKit', async ({ page }) => {
+    await page.goto(ROUTES.HOME);
+
+    // Click connect button
+    await page.click('button:has-text("Connect Wallet")');
+
+    // Wait for wallet modal
+    await page.waitForSelector('[data-testid="wallet-modal"], [aria-label="Wallet Modal"]');
+
+    // Select MetaMask
+    await page.click('button:has-text("MetaMask")');
+
+    // TODO: Handle MetaMask popup with Synpress
+    // await metamask.connectToDapp();
+
+    // Verify connection
+    await expect(page.locator('nav')).toContainText(/0x[a-fA-F0-9]{4}/);
+  });
+
+  test('Switch to DChain network', async ({ page }) => {
+    // TODO: Implement network switching with Synpress
+    // await metamask.switchNetwork('DChain');
+  });
+});
+
+test.describe.skip('Project Creation Flow', () => {
+  test('Create new research project', async ({ page }) => {
+    await page.goto(ROUTES.PROJECTS);
+
+    // Click create project
+    await page.click('button:has-text("Create Project")');
+
+    // Fill project form
+    await page.fill('input[name="title"]', TEST_PROJECT.title);
+    await page.selectOption('select[name="category"]', TEST_PROJECT.category);
+
+    // Add milestones
+    for (const milestone of TEST_PROJECT.milestones) {
+      await page.click('button:has-text("Add Milestone")');
+      await page.fill('input[name="milestoneTitle"]', milestone.title);
+      await page.fill('input[name="milestoneGoal"]', milestone.goal);
+      await page.fill('input[name="milestoneDuration"]', milestone.duration.toString());
+    }
+
+    // Submit form
+    await page.click('button:has-text("Deploy Project")');
+
+    // TODO: Handle MetaMask transaction approval
+    // await metamask.confirmTransaction();
+
+    // Wait for transaction confirmation
+    await page.waitForSelector('text=/Project created/i', { timeout: 60000 });
+
+    // Verify project appears in list
+    await expect(page.locator('text=' + TEST_PROJECT.title)).toBeVisible();
+  });
+});
+
+test.describe.skip('Donation Flow', () => {
+  test('Donate to project', async ({ page }) => {
+    // TODO: Navigate to test project
+    // TODO: Fill donation amount
+    // TODO: Approve token allowance (if needed)
+    // TODO: Confirm donation transaction
+    // TODO: Verify donation success
+  });
+});
+
+test.describe.skip('Staking Flow', () => {
+  test('Stake DKT tokens', async ({ page }) => {
+    await page.goto(ROUTES.STAKE);
+
+    // Fill stake amount
+    await page.fill('input[name="stakeAmount"]', '100');
+
+    // Click stake button
+    await page.click('button:has-text("Stake")');
+
+    // TODO: Approve token with MetaMask
+    // TODO: Confirm stake transaction
+    // TODO: Verify staked amount updates
+  });
+
+  test('Claim staking rewards', async ({ page }) => {
+    // TODO: Check pending rewards
+    // TODO: Click claim button
+    // TODO: Confirm transaction
+    // TODO: Verify balance increase
+  });
+
+  test('Unstake tokens', async ({ page }) => {
+    // TODO: Implement unstaking flow
+  });
+});
+
+test.describe.skip('Milestone Voting Flow', () => {
+  test('Submit milestone proof as researcher', async ({ page }) => {
+    // TODO: Navigate to owned project
+    // TODO: Upload proof document
+    // TODO: Submit proof transaction
+    // TODO: Verify milestone status changes to "Voting"
+  });
+
+  test('Vote on milestone as donor', async ({ page }) => {
+    // TODO: Switch to donor wallet
+    // TODO: Navigate to project with pending vote
+    // TODO: Click approve/reject
+    // TODO: Confirm vote transaction
+    // TODO: Verify vote recorded
+  });
+
+  test('Claim refund after rejection', async ({ page }) => {
+    // TODO: Implement refund claim flow
+  });
+});
+
+/**
+ * Example Synpress configuration (add to playwright.config.ts)
+ */
+const exampleConfig = {
+  use: {
+    // MetaMask extension setup
+    extensionPath: require('path').join(__dirname, '../extensions/metamask'),
+    testIdAttribute: 'data-testid',
+  },
+  // Synpress options
+  synpress: {
+    network: 'localhost',
+    wallet: {
+      seed: 'test test test test test test test test test test test junk',
+      password: 'Password123!',
+    },
+  },
+};
