@@ -49,6 +49,7 @@ function DktBalance() {
 export function Navbar() {
   const pathname = usePathname();
   const t = useTranslations("nav");
+  const { address, isConnected } = useAccount();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
@@ -85,6 +86,20 @@ export function Navbar() {
                 </Link>
               );
             })}
+            {/* Profile link - shows only when connected */}
+            {isConnected && address && (
+              <Link
+                href={`/profile/${address}`}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200",
+                  pathname.startsWith("/profile")
+                    ? "text-white bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
+                    : "text-muted-foreground hover:text-white hover:bg-white/5"
+                )}
+              >
+                {t("profile")}
+              </Link>
+            )}
           </div>
 
           {/* Right section */}
