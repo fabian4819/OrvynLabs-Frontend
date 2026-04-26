@@ -148,7 +148,7 @@ export function CreateProjectDialog({ onCreated }: CreateProjectDialogProps) {
         functionName: "createProject",
         args: [title.trim(), milestoneTitles, milestoneGoals, milestoneDurations],
         // Gas estimation is unreliable for BeaconProxy deployments — the EVM
-        // simulator inflates the estimate far beyond the per-tx limit (25M on Base).
+        // simulator inflates the estimate far beyond the per-tx limit (25M on DChain).
         // Actual median cost from benchmarks is ~525k; 800k gives a safe buffer.
         gas: 800_000n,
       });

@@ -20,8 +20,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orvyn-Labs Research Funding",
-  description: "Decentralized research crowdfunding on Base Network — Bachelor Thesis Project",
+  title: "Orvyn-Labs - Research Funding Platform",
+  description: "Decentralized research crowdfunding on DChain — Bachelor Thesis Project",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default async function RootLayout({

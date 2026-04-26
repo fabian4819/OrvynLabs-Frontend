@@ -50,7 +50,7 @@ export default function ProjectsPage() {
                 <NetworkBadge />
               </div>
               <p className="text-muted-foreground text-sm max-w-lg font-medium leading-relaxed">
-                Browse and fund decentralized research on Base. Each project is a self-contained smart contract verifying Indonesia&apos;s research potential.
+                Browse and fund decentralized research on DChain. Each project is a self-contained smart contract verifying Indonesia&apos;s research potential.
               </p>
             </div>
 

@@ -43,7 +43,7 @@ export function HeroSection() {
           <StaggerItem>
             <p className="mt-6 text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
               Orvyn-Labs enables researchers to raise funds through blockchain-based crowdfunding. 
-              Transparent, immutable, and optimized for scale on Base Network.
+              Transparent, immutable, and optimized for scale on DChain.
             </p>
           </StaggerItem>
 

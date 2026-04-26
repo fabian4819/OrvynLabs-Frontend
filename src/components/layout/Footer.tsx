@@ -1,4 +1,5 @@
-import { FlaskConical } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
 export function Footer() {
   return (
@@ -6,13 +7,17 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 items-center justify-between gap-8 text-sm text-muted-foreground text-center md:text-left">
           <div className="flex flex-col items-center md:items-start gap-3">
-            <div className="flex items-center gap-2">
-              <div className="bg-blue-500/10 p-1.5 rounded-lg">
-                <FlaskConical className="h-5 w-5 text-blue-500" />
-              </div>
-              <span className="font-black tracking-tight text-foreground text-base">Orvyn-Labs Research Funding</span>
-            </div>
-            <p className="max-w-[200px] leading-relaxed opacity-60">
+            <Link href="/" className="flex items-center gap-2.5">
+              <Image
+                src="/logo.png"
+                alt="Orvyn-Labs Logo"
+                width={40}
+                height={40}
+                className="h-10 w-10"
+              />
+              <span className="font-black tracking-tight text-foreground text-base leading-none">Orvyn-Labs</span>
+            </Link>
+            <p className="max-w-50 leading-relaxed opacity-60">
               A decentralized protocol for Indonesian higher education research.
             </p>
           </div>

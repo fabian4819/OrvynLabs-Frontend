@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useChainId, useAccount, useReadContract } from "wagmi";
@@ -54,9 +55,17 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
-          {/* Logo */}
-          <Link href="/" className="font-black text-xl tracking-tighter group shrink-0">
-            <span className="bg-clip-text text-transparent bg-linear-to-r from-white to-white/60 group-hover:to-blue-400 transition-all">Orvyn-Labs</span>
+          {/* Logo and Brand Name */}
+          <Link href="/" className="shrink-0 flex items-center gap-2.5">
+            <Image
+              src="/logo.png"
+              alt="Orvyn-Labs Logo"
+              width={40}
+              height={40}
+              className="h-10 w-10"
+              priority
+            />
+            <span className="hidden sm:inline font-bold text-base text-white leading-none">Orvyn-Labs</span>
           </Link>
 
           {/* Nav links */}
