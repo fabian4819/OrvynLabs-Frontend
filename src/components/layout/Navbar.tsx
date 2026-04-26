@@ -90,10 +90,10 @@ export function Navbar() {
           {/* Right section */}
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <DktBalance />
             <LanguageSwitcher />
             <ThemeToggle />
-            <div className="scale-90 sm:scale-100 origin-right" data-tour="connect-wallet">
+            <div className="flex items-center gap-3 scale-90 sm:scale-100 origin-right" data-tour="connect-wallet">
+              <DktBalance />
               <ConnectButton
                 accountStatus="avatar"
                 chainStatus="icon"
