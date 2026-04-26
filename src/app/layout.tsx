@@ -5,10 +5,9 @@ import { Providers } from "./providers";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { ClientLayout } from "@/components/layout/ClientLayout";
-import { headers, cookies } from "next/headers";
+import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
 import { wagmiConfig } from "@/lib/wagmi";
-import { defaultLocale, type Locale } from "@/i18n/request";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,12 +34,11 @@ export default async function RootLayout({
   const cookie = headersList.get("cookie");
   const initialState = cookieToInitialState(wagmiConfig, cookie);
 
-  // Get locale from cookie
-  const cookieStore = await cookies();
-  const locale = (cookieStore.get("NEXT_LOCALE")?.value || defaultLocale) as Locale;
+  // Get locale from cookie (default to English, only English is supported)
+  const locale = "en" as const;
 
   // Load messages for the current locale
-  const messages = (await import(`@/locales/${locale}.json`)).default;
+  const messages = (await import(`@/locales/en.json`)).default;
 
   return (
     <html lang={locale} className="dark">

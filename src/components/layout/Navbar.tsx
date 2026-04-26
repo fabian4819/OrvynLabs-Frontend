@@ -9,7 +9,6 @@ import { DiktiTokenAbi } from "@/lib/abis";
 import { getContracts } from "@/lib/contracts";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { useTranslations } from "next-intl";
 
 
@@ -105,7 +104,6 @@ export function Navbar() {
           {/* Right section */}
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <LanguageSwitcher />
             <ThemeToggle />
             <div className="flex items-center gap-3 scale-90 sm:scale-100 origin-right" data-tour="connect-wallet">
               <DktBalance />
