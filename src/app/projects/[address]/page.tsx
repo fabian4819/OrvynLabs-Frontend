@@ -18,6 +18,7 @@ import {
   isExpired,
 } from "@/lib/utils";
 import { useProject, MilestoneStatus, ProjectStatus, type Milestone } from "@/hooks/useProject";
+import { uploadToPinata } from "@/lib/pinata";
 import { ResearchProjectAbi } from "@/lib/abis";
 import {
   User, Clock, Target, Wallet, ArrowLeft, TrendingUp, Zap,
@@ -82,6 +83,10 @@ function MilestoneTimeline({
   hasVoted,
   onVote,
   voteState,
+  showRejectInput,
+  rejectReason,
+  onRejectReasonChange,
+  onShowRejectInput,
 }: {
   milestones: Milestone[];
   currentIdx: number;
@@ -89,6 +94,10 @@ function MilestoneTimeline({
   hasVoted?: boolean;
   onVote?: (approve: boolean) => void;
   voteState?: "idle" | "pending" | "confirming" | "success" | "error";
+  showRejectInput?: boolean;
+  rejectReason?: string;
+  onRejectReasonChange?: (v: string) => void;
+  onShowRejectInput?: (v: boolean) => void;
 }) {
   const isDonor = (myDonation ?? 0n) > 0n;
 
@@ -102,8 +111,8 @@ function MilestoneTimeline({
         const isVoting = ms.status === MilestoneStatus.Voting;
         const canVoteHere = isVoting && isDonor && !hasVoted && isCurrentActive;
         // Determine proof type for rendering
-        const isImageProof = ms.proofUri?.startsWith("data:image/") || /\.(png|jpg|jpeg|gif|webp|svg)(\?.*)?$/i.test(ms.proofUri ?? "");
         const isPdfProof = ms.proofUri?.startsWith("data:application/pdf") || /\.pdf(\?.*)?$/i.test(ms.proofUri ?? "");
+        const isImageProof = ms.proofUri?.startsWith("data:image/") || /\.(png|jpg|jpeg|gif|webp|svg)(\?.*)?$/i.test(ms.proofUri ?? "") || (!isPdfProof && /\/ipfs\/\//i.test(ms.proofUri ?? ""));
 
         return (
           <div
@@ -206,11 +215,35 @@ function MilestoneTimeline({
                   <TxButton
                     txState={voteState ?? "idle"}
                     idleLabel="Reject"
-                    onClick={() => onVote(false)}
+                    onClick={() => onShowRejectInput?.(true)}
                     variant="outline"
                     className="h-10 rounded-xl font-black uppercase tracking-widest text-xs border-red-500/30 text-red-400 hover:bg-red-500/10"
                   />
                 </div>
+                {showRejectInput && (
+                  <div className="space-y-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+                    <textarea
+                      className="w-full h-16 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white placeholder:text-white/30 outline-none focus:border-red-500/50 resize-none"
+                      placeholder="Why reject? (optional — shared with researcher)"
+                      value={rejectReason ?? ""}
+                      onChange={e => onRejectReasonChange?.(e.target.value)}
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <TxButton
+                        txState={voteState ?? "idle"}
+                        idleLabel="Confirm Reject"
+                        onClick={() => onVote(false)}
+                        className="h-8 rounded-lg font-black uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-500 text-white"
+                      />
+                      <button
+                        onClick={() => { onShowRejectInput?.(false); onRejectReasonChange?.(""); }}
+                        className="h-8 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white border border-white/10"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -351,6 +384,8 @@ function ActionPanel({
   isResearcher,
   myDonation,
   hasVoted,
+  projectStatus,
+  yieldReceived,
   refetch,
 }: {
   addr: `0x${string}`;
@@ -359,13 +394,18 @@ function ActionPanel({
   isResearcher: boolean;
   myDonation: bigint | undefined;
   hasVoted: boolean | undefined;
+  projectStatus: number | undefined;
+  yieldReceived: bigint | undefined;
   refetch: () => void;
 }) {
   const [proofUri, setProofUri] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string>("");
   const [proofTab, setProofTab] = useState<"file" | "url">("file");
+  const [uploading, setUploading] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
 
   // Submit Proof
   const [proofHash, setProofHash] = useState<`0x${string}` | undefined>();
@@ -397,50 +437,80 @@ function ActionPanel({
   const { writeContractAsync: writeCancel, isPending: cancelPending } = useWriteContract();
   const { isLoading: cancelConfirming, isSuccess: cancelSuccess } = useWaitForTransactionReceipt({ hash: cancelHash });
 
+  // Resubmit Proof
+  const [resubmitHash, setResubmitHash] = useState<`0x${string}` | undefined>();
+  const { writeContractAsync: writeResubmit, isPending: resubmitPending } = useWriteContract();
+  const { isLoading: resubmitConfirming, isSuccess: resubmitSuccess } = useWaitForTransactionReceipt({ hash: resubmitHash });
+  const [resubmitUri, setResubmitUri] = useState("");
+  const [resubmitFile, setResubmitFile] = useState<File | null>(null);
+  const [resubmitPreview, setResubmitPreview] = useState<string>("");
+  const [resubmitUploading, setResubmitUploading] = useState(false);
+
+  // Claim Yield Allocation
+  const [yieldHash, setYieldHash] = useState<`0x${string}` | undefined>();
+  const { writeContractAsync: writeClaimYield, isPending: yieldPending } = useWriteContract();
+  const { isLoading: yieldConfirming, isSuccess: yieldSuccess } = useWaitForTransactionReceipt({ hash: yieldHash });
+
   if (!milestone) return null;
 
   const deadlinePassed = isExpired(milestone.deadline);
   const hasRaised      = milestone.raised > 0n;
+  const goalReached    = milestone.goal > 0n && milestone.raised >= milestone.goal;
   const isDonor        = (myDonation ?? 0n) > 0n;
 
   // Researcher: can submit proof when status=Pending and (goal reached OR deadline passed) and has raised
-  const canSubmitProof = isResearcher && milestone.status === MilestoneStatus.Pending && (hasRaised || deadlinePassed) && hasRaised;
+  // Contract logic: if (block.timestamp <= deadline && raised < goal) revert DeadlineNotReached
+  // Means: allow if (deadline passed OR goal reached) AND has donations
+  const canSubmitProof = isResearcher && milestone.status === MilestoneStatus.Pending && hasRaised && (deadlinePassed || goalReached);
   // Researcher: can skip when deadline passed, status=Pending, no donations
   const canSkip = deadlinePassed && milestone.status === MilestoneStatus.Pending && !hasRaised;
   // Anyone: can force-finalize a voting milestone
-  const canForceFinalize = milestone.status === MilestoneStatus.Voting;
+  const canForceFinalize = milestone.status === MilestoneStatus.Voting && milestone.voteDeadline > 0n && isExpired(milestone.voteDeadline);
   // Donor: can vote when voting is open and hasn't voted yet
   const canVote = isDonor && milestone.status === MilestoneStatus.Voting && !hasVoted;
   // Donor: can claim refund on rejected milestone
   const canRefund = isDonor && milestone.status === MilestoneStatus.Rejected;
 
   // Researcher: can cancel when project is active
-  const canCancel = isResearcher;
+  const canCancel = isResearcher && projectStatus === ProjectStatus.Active;
+  // Researcher: can resubmit proof when milestone is Rejected
+  const canResubmit = isResearcher && milestone.status === MilestoneStatus.Rejected;
+  // Researcher: can claim yield allocation when there's yield available
+  const canClaimYield = isResearcher && (yieldReceived ?? 0n) > 0n;
 
-  const hasAnyAction = canSubmitProof || canSkip || canForceFinalize || canVote || canRefund || canCancel;
+  const hasAnyAction = canSubmitProof || canSkip || canForceFinalize || canVote || canRefund || canCancel || canResubmit || canClaimYield;
   if (!hasAnyAction) return null;
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setProofFile(file);
+    setProofUri("");
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUri = reader.result as string;
-      setProofPreview(dataUri);
-      setProofUri(dataUri);
+      setProofPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
   }
 
   async function handleSubmitProof() {
-    const h = await writeProof({ address: addr, abi: ResearchProjectAbi, functionName: "submitProof", args: [proofUri] });
+    let uri = proofUri;
+    if (proofFile) {
+      setUploading(true);
+      try {
+        uri = await uploadToPinata(proofFile);
+      } finally {
+        setUploading(false);
+      }
+    }
+    const h = await writeProof({ address: addr, abi: ResearchProjectAbi, functionName: "submitProof", args: [uri] });
     setProofHash(h); setProofUri(""); setProofFile(null); setProofPreview(""); refetch();
   }
 
   async function handleVote(approve: boolean) {
-    const h = await writeVote({ address: addr, abi: ResearchProjectAbi, functionName: "vote", args: [approve] });
-    setVoteHash(h); refetch();
+    const reason = approve ? "" : rejectReason;
+    const h = await writeVote({ address: addr, abi: ResearchProjectAbi, functionName: "vote", args: [approve, reason] });
+    setVoteHash(h); setRejectReason(""); setShowRejectInput(false); refetch();
   }
 
   async function handleForceFinalize() {
@@ -461,6 +531,25 @@ function ActionPanel({
   async function handleCancel() {
     const h = await writeCancel({ address: addr, abi: ResearchProjectAbi, functionName: "cancel" });
     setCancelHash(h); setConfirmCancel(false); refetch();
+  }
+
+  async function handleResubmitProof() {
+    let uri = resubmitUri;
+    if (resubmitFile) {
+      setResubmitUploading(true);
+      try {
+        uri = await uploadToPinata(resubmitFile);
+      } finally {
+        setResubmitUploading(false);
+      }
+    }
+    const h = await writeResubmit({ address: addr, abi: ResearchProjectAbi, functionName: "resubmitProof", args: [uri] });
+    setResubmitHash(h); setResubmitUri(""); setResubmitFile(null); setResubmitPreview(""); refetch();
+  }
+
+  async function handleClaimYield() {
+    const h = await writeClaimYield({ address: addr, abi: ResearchProjectAbi, functionName: "claimYieldAllocation" });
+    setYieldHash(h); refetch();
   }
 
   return (
@@ -534,9 +623,9 @@ function ActionPanel({
             )}
 
             <TxButton
-              txState={proofPending ? "pending" : proofConfirming ? "confirming" : proofSuccess ? "success" : "idle"}
-              idleLabel="Submit Proof"
-              disabled={!proofUri}
+              txState={uploading ? "pending" : proofPending ? "pending" : proofConfirming ? "confirming" : proofSuccess ? "success" : "idle"}
+              idleLabel={uploading ? "Uploading to IPFS..." : "Submit Proof"}
+              disabled={(!proofUri && !proofFile) || uploading}
               onClick={handleSubmitProof}
               className="w-full h-12 rounded-2xl font-black uppercase tracking-widest"
             />
@@ -574,21 +663,50 @@ function ActionPanel({
               <TxButton
                 txState={votePending ? "pending" : voteConfirming ? "confirming" : voteSuccess ? "success" : "idle"}
                 idleLabel="Reject"
-                onClick={() => handleVote(false)}
+                onClick={() => setShowRejectInput(true)}
                 variant="outline"
                 className="h-12 rounded-2xl font-black uppercase tracking-widest border-red-500/30 text-red-400 hover:bg-red-500/10"
               />
             </div>
+            {showRejectInput && (
+              <div className="space-y-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                <textarea
+                  className="w-full h-20 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-red-500/50 resize-none"
+                  placeholder="Why are you rejecting? (optional — shared with researcher)"
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <TxButton
+                    txState={votePending ? "pending" : voteConfirming ? "confirming" : voteSuccess ? "success" : "idle"}
+                    idleLabel="Confirm Reject"
+                    onClick={() => handleVote(false)}
+                    className="h-10 rounded-xl font-black uppercase tracking-widest bg-red-600 hover:bg-red-500 text-white text-xs"
+                  />
+                  <button
+                    onClick={() => { setShowRejectInput(false); setRejectReason(""); }}
+                    className="h-10 rounded-xl text-xs font-black uppercase tracking-widest text-white/50 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Force finalize */}
+        {/* Finalize after vote deadline */}
         {canForceFinalize && !canVote && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Force-finalize based on current votes. Whichever side has more DKT weight wins.</p>
+            <p className="text-sm text-muted-foreground">
+              The 7-day voting period has ended. Finalize based on current votes — whichever side has more DKT weight wins.
+              {milestone.voteDeadline > 0n && (
+                <span className="block mt-1 text-[10px] text-white/40">Vote deadline: {formatDeadline(milestone.voteDeadline)}</span>
+              )}
+            </p>
             <TxButton
               txState={finalizePending ? "pending" : finalizeConfirming ? "confirming" : finalizeSuccess ? "success" : "idle"}
-              idleLabel="Force Finalize Vote"
+              idleLabel="Finalize Vote"
               onClick={handleForceFinalize}
               className="w-full h-12 rounded-2xl font-black uppercase tracking-widest"
             />
@@ -607,6 +725,76 @@ function ActionPanel({
               onClick={handleRefund}
               variant="outline"
               className="w-full h-12 rounded-2xl font-black uppercase tracking-widest border-white/10"
+            />
+          </div>
+        )}
+
+        {/* Resubmit Proof — researcher only, after rejection */}
+        {canResubmit && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              The milestone was rejected by donors. Submit updated proof to reopen voting.
+            </p>
+            <div className="space-y-3">
+              <label className="block w-full cursor-pointer">
+                <div className="flex flex-col items-center justify-center gap-3 h-28 rounded-2xl border-2 border-dashed border-white/15 bg-white/[0.03] hover:border-amber-500/40 hover:bg-amber-500/5 transition-all text-center px-4">
+                  {resubmitFile ? (
+                    <>
+                      <FileIcon className="h-6 w-6 text-amber-400" />
+                      <p className="text-xs font-semibold text-white/80 truncate max-w-full">{resubmitFile.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{(resubmitFile.size / 1024).toFixed(1)} KB — click to replace</p>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 text-white/20" />
+                      <p className="text-xs text-muted-foreground">Click to select PDF or image</p>
+                    </>
+                  )}
+                </div>
+                <input type="file" accept="application/pdf,image/*" className="hidden" onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setResubmitFile(f); setResubmitUri("");
+                  const r = new FileReader();
+                  r.onload = () => setResubmitPreview(r.result as string);
+                  r.readAsDataURL(f);
+                }} />
+              </label>
+              {resubmitPreview && resubmitFile?.type.startsWith("image/") && (
+                <div className="rounded-xl overflow-hidden border border-white/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={resubmitPreview} alt="resubmit preview" className="w-full max-h-40 object-contain bg-black/20" />
+                </div>
+              )}
+              <p className="text-center text-[10px] text-white/30">— or paste a URL —</p>
+              <input
+                className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl px-4 text-sm text-white placeholder:text-white/30 outline-none focus:border-amber-500/50"
+                placeholder="https://ipfs.io/ipfs/... or any public URL"
+                value={resubmitUri}
+                onChange={e => { setResubmitUri(e.target.value); setResubmitFile(null); setResubmitPreview(""); }}
+              />
+            </div>
+            <TxButton
+              txState={resubmitUploading ? "pending" : resubmitPending ? "pending" : resubmitConfirming ? "confirming" : resubmitSuccess ? "success" : "idle"}
+              idleLabel={resubmitUploading ? "Uploading to IPFS..." : "Resubmit Proof"}
+              disabled={(!resubmitUri && !resubmitFile) || resubmitUploading}
+              onClick={handleResubmitProof}
+              className="w-full h-12 rounded-2xl font-black uppercase tracking-widest bg-amber-600 hover:bg-amber-500 text-white"
+            />
+          </div>
+        )}
+
+        {/* Claim Yield Allocation — researcher only */}
+        {canClaimYield && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Claim yield allocated to your project from staker donations. Available: <span className="text-yellow-400 font-black">{formatDkt(yieldReceived ?? 0n)}</span>
+            </p>
+            <TxButton
+              txState={yieldPending ? "pending" : yieldConfirming ? "confirming" : yieldSuccess ? "success" : "idle"}
+              idleLabel={`Claim ${formatDkt(yieldReceived ?? 0n)} Yield`}
+              onClick={handleClaimYield}
+              className="w-full h-12 rounded-2xl font-black uppercase tracking-widest bg-yellow-600 hover:bg-yellow-500 text-white"
             />
           </div>
         )}
@@ -667,10 +855,16 @@ export default function ProjectDetailPage({ params }: Props) {
   const { writeContractAsync: writeInlineVote, isPending: inlineVotePending } = useWriteContract();
   const { isLoading: inlineVoteConfirming, isSuccess: inlineVoteSuccess } = useWaitForTransactionReceipt({ hash: inlineVoteHash });
 
+  const [inlineRejectReason, setInlineRejectReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
+
   async function handleInlineVote(approve: boolean) {
+    const reason = approve ? "" : inlineRejectReason;
     try {
-      const h = await writeInlineVote({ address: addr, abi: ResearchProjectAbi, functionName: "vote", args: [approve] });
+      const h = await writeInlineVote({ address: addr, abi: ResearchProjectAbi, functionName: "vote", args: [approve, reason] });
       setInlineVoteHash(h);
+      setInlineRejectReason("");
+      setShowRejectInput(false);
       refetch();
     } catch { /* surfaced via txState */ }
   }
@@ -784,6 +978,10 @@ export default function ProjectDetailPage({ params }: Props) {
                         hasVoted={hasVoted}
                         onVote={isConnected ? handleInlineVote : undefined}
                         voteState={inlineVoteState}
+                        showRejectInput={showRejectInput}
+                        rejectReason={inlineRejectReason}
+                        onRejectReasonChange={setInlineRejectReason}
+                        onShowRejectInput={setShowRejectInput}
                       />
                     : <p className="text-muted-foreground text-sm text-center py-8">No milestones loaded.</p>
                   }
@@ -801,6 +999,8 @@ export default function ProjectDetailPage({ params }: Props) {
                   isResearcher={isResearcher}
                   myDonation={myCurrentDonation}
                   hasVoted={hasVoted}
+                  projectStatus={projectStatus}
+                  yieldReceived={yieldReceived}
                   refetch={refetch}
                 />
               </FadeIn>
@@ -886,7 +1086,7 @@ export default function ProjectDetailPage({ params }: Props) {
                     {currentMs?.status === MilestoneStatus.Voting
                       ? "Awaiting donor vote on current milestone."
                       : currentMs?.status === MilestoneStatus.Rejected
-                        ? "Current milestone rejected. Awaiting researcher action."
+                        ? "Current milestone rejected. The researcher can resubmit proof for a new vote."
                         : "No active milestone accepting donations."}
                   </p>
                 </div>

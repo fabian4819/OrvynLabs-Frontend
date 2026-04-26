@@ -21,14 +21,17 @@ export enum ProjectStatus {
 }
 
 export interface Milestone {
-  title:    string;
-  goal:     bigint;
-  deadline: bigint;
-  raised:   bigint;
-  votesYes: bigint;
-  votesNo:  bigint;
-  proofUri: string;
-  status:   MilestoneStatus;
+  title:            string;
+  goal:             bigint;
+  deadline:         bigint;
+  raised:           bigint;
+  votesYes:         bigint;
+  votesNo:          bigint;
+  voteDeadline:     bigint;
+  proofUri:         string;
+  status:           MilestoneStatus;
+  uniqueDonorCount: bigint;
+  refundDeadline:   bigint;
 }
 
 export function useProject(projectAddress: `0x${string}`) {
@@ -74,7 +77,7 @@ export function useProject(projectAddress: `0x${string}`) {
   const currentIdx = Number(currentMilestoneIndex ?? 0);
   const caller = (address ?? zero) as `0x${string}`;
 
-  // Build per-milestone user reads (donations + voted for all milestones)
+  // Build per-milestone user reads (donations + voteRound + votedRound for all milestones)
   const userPerMilestoneContracts = Array.from({ length: count }, (_, i) => ([
     {
       address: projectAddress,
@@ -85,7 +88,13 @@ export function useProject(projectAddress: `0x${string}`) {
     {
       address: projectAddress,
       abi: ResearchProjectAbi,
-      functionName: "voted" as const,
+      functionName: "voteRound" as const,
+      args: [BigInt(i)] as const,
+    },
+    {
+      address: projectAddress,
+      abi: ResearchProjectAbi,
+      functionName: "votedRound" as const,
       args: [BigInt(i), caller] as const,
     },
   ])).flat();
@@ -102,29 +111,37 @@ export function useProject(projectAddress: `0x${string}`) {
       const raw = milestoneData[i]?.result as {
         title: string; goal: bigint; deadline: bigint; raised: bigint;
         votesYes: bigint; votesNo: bigint; proofUri: string; status: number;
+        voteDeadline: bigint; uniqueDonorCount: bigint; refundDeadline: bigint;
       } | undefined;
       if (raw) {
         milestones.push({
-          title:    raw.title,
-          goal:     raw.goal,
-          deadline: raw.deadline,
-          raised:   raw.raised,
-          votesYes: raw.votesYes,
-          votesNo:  raw.votesNo,
-          proofUri: raw.proofUri,
-          status:   raw.status as MilestoneStatus,
+          title:            raw.title,
+          goal:             raw.goal,
+          deadline:         raw.deadline,
+          raised:           raw.raised,
+          votesYes:         raw.votesYes,
+          votesNo:          raw.votesNo,
+          proofUri:         raw.proofUri,
+          status:           raw.status as MilestoneStatus,
+          voteDeadline:     raw.voteDeadline,
+          uniqueDonorCount: raw.uniqueDonorCount,
+          refundDeadline:   raw.refundDeadline,
         });
       }
     }
   }
 
-  // Parse per-milestone user data (2 entries per milestone: donations, voted)
+  // Parse per-milestone user data (3 entries per milestone: donations, voteRound, votedRound)
   const myDonationsPerMilestone: bigint[] = Array.from({ length: count }, (_, i) =>
-    (userMilestoneData?.[i * 2]?.result as bigint | undefined) ?? 0n
+    (userMilestoneData?.[i * 3]?.result as bigint | undefined) ?? 0n
   );
-  const hasVotedPerMilestone: boolean[] = Array.from({ length: count }, (_, i) =>
-    (userMilestoneData?.[i * 2 + 1]?.result as boolean | undefined) ?? false
-  );
+
+  // Correct vote tracking: user has voted if votedRound === voteRound + 1
+  const hasVotedPerMilestone: boolean[] = Array.from({ length: count }, (_, i) => {
+    const voteRound = (userMilestoneData?.[i * 3 + 1]?.result as bigint | undefined) ?? 0n;
+    const votedRound = (userMilestoneData?.[i * 3 + 2]?.result as bigint | undefined) ?? 0n;
+    return votedRound === voteRound + 1n;
+  });
 
   const myCurrentDonation = address ? myDonationsPerMilestone[currentIdx] : undefined;
   const hasVoted          = address ? hasVotedPerMilestone[currentIdx] : undefined;
