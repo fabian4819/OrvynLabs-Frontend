@@ -3,26 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useReadContract } from "wagmi";
-import { useChainId } from "wagmi";
+import { useChainId, useAccount, useReadContract } from "wagmi";
 import { cn, formatDkt } from "@/lib/utils";
 import { DiktiTokenAbi } from "@/lib/abis";
 import { getContracts } from "@/lib/contracts";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./NotificationBell";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { User, Droplets } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
 
 const NAV_LINKS = [
   { href: "/projects", key: "projects" },
   { href: "/stake", key: "stake" },
-  { href: "/analytics", key: "analytics" },
   { href: "/leaderboard", key: "leaderboard" },
   { href: "/history", key: "history" },
   { href: "/favorites", key: "favorites" },
+  { href: "/faucet", key: "faucet" },
   { href: "/help", key: "help" },
 ] as const;
 
@@ -51,9 +48,7 @@ function DktBalance() {
 
 export function Navbar() {
   const pathname = usePathname();
-  const { address, isConnected } = useAccount();
   const t = useTranslations("nav");
-  const tCommon = useTranslations("common");
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/5 bg-background/60 backdrop-blur-xl">
@@ -61,7 +56,7 @@ export function Navbar() {
         <div className="flex h-16 items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="font-black text-xl tracking-tighter group shrink-0">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60 group-hover:to-blue-400 transition-all">Orvyn-Labs</span>
+            <span className="bg-clip-text text-transparent bg-linear-to-r from-white to-white/60 group-hover:to-blue-400 transition-all">Orvyn-Labs</span>
           </Link>
 
           {/* Nav links */}
@@ -71,7 +66,6 @@ export function Navbar() {
               const getTourAttr = () => {
                 if (href === "/projects") return "projects";
                 if (href === "/stake") return "stake";
-                if (href === "/analytics") return "analytics";
                 return undefined;
               };
 
@@ -95,34 +89,8 @@ export function Navbar() {
 
           {/* Right section */}
           <div className="flex items-center gap-3">
-            <DktBalance />
             <NotificationBell />
-            {isConnected && address && (
-              <>
-                <Link href="/faucet">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 hidden sm:flex"
-                    title="Faucet"
-                  >
-                    <Droplets className="h-4 w-4" />
-                    <span className="text-xs">Faucet</span>
-                  </Button>
-                </Link>
-                <Link href={`/profile/${address}`}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-2 hidden sm:flex"
-                    title={t("profile")}
-                  >
-                    <User className="h-4 w-4" />
-                    <span className="text-xs">{t("profile")}</span>
-                  </Button>
-                </Link>
-              </>
-            )}
+            <DktBalance />
             <LanguageSwitcher />
             <ThemeToggle />
             <div className="scale-90 sm:scale-100 origin-right" data-tour="connect-wallet">

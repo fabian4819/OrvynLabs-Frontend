@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,8 +12,8 @@ import { useLocale } from "next-intl";
 import type { Locale } from "@/i18n/request";
 
 const languages = {
-  en: { name: "English", flag: "🇺🇸" },
-  id: { name: "Bahasa Indonesia", flag: "🇮🇩" },
+  en: { name: "English", flag: "🇺🇸", code: "EN" },
+  id: { name: "Bahasa Indonesia", flag: "🇮🇩", code: "ID" },
 };
 
 export function LanguageSwitcher() {
@@ -39,14 +38,10 @@ export function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2"
+          className="text-xs font-semibold px-2"
           disabled={isPending}
         >
-          <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {languages[currentLocale].flag} {languages[currentLocale].name}
-          </span>
-          <span className="sm:hidden">{languages[currentLocale].flag}</span>
+          {languages[currentLocale].flag} {languages[currentLocale].code}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="glass-morphism">
@@ -57,7 +52,7 @@ export function LanguageSwitcher() {
             className={currentLocale === locale ? "bg-white/10" : ""}
           >
             <span className="mr-2">{languages[locale].flag}</span>
-            {languages[locale].name}
+            {languages[locale].code}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
